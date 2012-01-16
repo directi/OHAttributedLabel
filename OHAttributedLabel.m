@@ -372,12 +372,21 @@ BOOL CTRunContainsCharactersFromStringRange(CTRunRef run, NSRange range) {
 	
 	NSTextCheckingResult *linkAtTouchesEnded = [self linkAtPoint:pt];
 	
-	// we can check on equality of the ranges themselfes since the data detectors create new results
-	if (activeLink && NSEqualRanges(activeLink.range,linkAtTouchesEnded.range)) {
-		BOOL openLink = (self.delegate && [self.delegate respondsToSelector:@selector(attributedLabel:shouldFollowLink:)])
-		? [self.delegate attributedLabel:self shouldFollowLink:activeLink] : YES;
-		if (openLink) [[UIApplication sharedApplication] openURL:activeLink.URL];
-	}
+  if (activeLink.resultType == NSTextCheckingTypeLink) {   
+    // we can check on equality of the links themselfes since the data detectors create new results
+    if (activeLink.URL && [activeLink.URL isEqual:linkAtTouchesEnded.URL]) {
+      BOOL openLink = (self.delegate && [self.delegate respondsToSelector:@selector(attributedLabel:shouldFollowLink:)])
+        ? [self.delegate attributedLabel:self shouldFollowLink:activeLink] : YES;
+      if (openLink) [[UIApplication sharedApplication] openURL:activeLink.URL];
+    }
+  } else if (activeLink.resultType == NSTextCheckingTypePhoneNumber) {
+    // we can check on equality of the links themselfes since the data detectors create new results
+    if (activeLink.phoneNumber && [activeLink.phoneNumber isEqualToString:linkAtTouchesEnded.phoneNumber]) {
+      BOOL openLink = (self.delegate && [self.delegate respondsToSelector:@selector(attributedLabel:shouldFollowLink:)])
+      ? [self.delegate attributedLabel:self shouldFollowLink:activeLink] : YES;
+      if (openLink) [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"tel:%@", activeLink.phoneNumber]]];
+    }
+  }
 	
 	[activeLink release];
 	activeLink = nil;
